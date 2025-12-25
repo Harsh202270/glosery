@@ -1,1 +1,1 @@
-# glosery
+# glosery shop
