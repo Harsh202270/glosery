@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product Details</title>
+<style>
+body{
+  margin:0;
+  font-family: 'Segoe UI', Arial;
+  background:linear-gradient(120deg,#f1fdf3,#e6f5ff);
+}
+
+/* container */
+.container{
+  max-width:900px;
+  margin:30px auto;
+  background:#fff;
+  border-radius:15px;
+  box-shadow:0 15px 40px rgba(0,0,0,.12);
+  padding:25px;
+}
+
+/* layout */
+.product{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:25px;
+}
+
+/* image gallery */
+.gallery img{
+  width:100%;
+  border-radius:12px;
+  margin-bottom:10px;
+  transition:.3s;
+}
+.gallery img:hover{
+  transform:scale(1.05);
+}
+
+/* details */
+h2{
+  margin:0;
+  font-size:26px;
+  color:#222;
+}
+
+.desc{
+  margin:12px 0;
+  color:#555;
+  line-height:1.6;
+}
+
+.old{
+  color:#888;
+  text-decoration:line-through;
+  font-size:16px;
+}
+
+.price{
+  color:#0aad0a;
+  font-size:26px;
+  font-weight:bold;
+}
+
+.discount{
+  background:#ff5252;
+  color:white;
+  padding:4px 10px;
+  border-radius:20px;
+  font-size:14px;
+  margin-left:10px;
+}
+
+.actions{
+  margin-top:20px;
+}
+
+.btn{
+  display:inline-block;
+  padding:12px 18px;
+  border-radius:30px;
+  text-decoration:none;
+  font-weight:bold;
+  margin-right:10px;
+  cursor:pointer;
+}
+
+
+/* IMAGE GALLERY */
+.gallery{
+  display:grid;
+  grid-template-columns:80px 1fr;
+  gap:15px;
+}
+
+.thumbs{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.thumbs img{
+  width:70px;
+  height:70px;
+  object-fit:cover;
+  border-radius:10px;
+  cursor:pointer;
+  border:2px solid transparent;
+  transition:.3s;
+}
+
+.thumbs img.active{
+  border-color:#0aad0a;
+}
+
+.main-img img{
+  width:100%;
+  border-radius:15px;
+}
+
+
+.buy{
+  background:#ff9800;
+  color:white;
+}
+
+.cart{
+  background:#0aad0a;
+  color:white;
+}
+
+.back-link{
+  display:inline-block;
+  margin-top:25px;
+  color:#0aad0a;
+  text-decoration:none;
+  font-weight:bold;
+}
+
+/* responsive */
+@media(max-width:768px){
+  .product{
+    grid-template-columns:1fr;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <div class="product">
+
+    <div class="gallery">
+  <div class="thumbs" id="thumbs"></div>
+  <div class="main-img">
+    <img id="mainImage">
+  </div>
+</div>
+
+
+    <!-- Details -->
+    <div>
+      <h2 id="name"></h2>
+      <p class="desc" id="desc"></p>
+
+      <p>
+        <span class="old" id="oldPrice"></span><br>
+        <span class="price" id="price"></span>
+        <span class="discount" id="discount"></span>
+      </p>
+
+      <!-- ✅ COLOR SECTION -->
+      <div class="color-box" id="colors"></div>
+      <p id="stockStatus" style="font-weight:bold;margin-top:10px;"></p>
+
+      <div class="actions">
+        <button class="btn buy" id="buyNowBtn">⚡ Buy Now</button>
+        <button class="btn cart" id="addToCartBtn">🛒 Add to Cart</button>
+      </div>
+
+      <button class="btn notify" id="notifyBtn"
+        style="display:none;background:#607d8b;color:white;margin-top:10px;">
+        🔔 Notify Me When Available
+      </button>
+
+
+      <a href="javascript:void(0)" class="back-link" onclick="history.back()">← Back to Store</a>
+    </div>
+  </div>
+</div>
+
+<script>
+const id = new URLSearchParams(window.location.search).get("id");
+
+// 🔢 Discount
+function getDiscount(oldP, newP) {
+  const o = parseFloat(oldP.replace(/\D/g, ""));
+  const n = parseFloat(newP.replace(/\D/g, ""));
+  return Math.round(((o - n) / o) * 100) + "% OFF";
+}
+
+// 📦 Stock + Expiry + Notify logic
+function checkStockAndExpiry(product) {
+  const stockStatus = document.getElementById("stockStatus");
+  const buyBtn = document.getElementById("buyNowBtn");
+  const cartBtn = document.getElementById("addToCartBtn");
+  const notifyBtn = document.getElementById("notifyBtn");
+
+  const today = new Date();
+  const expiryDate = new Date(product.expiry);
+
+  // ❌ Out of stock OR expired
+  if (product.stock <= 0 || expiryDate < today) {
+    stockStatus.innerText = "❌ Out of Stock";
+    stockStatus.style.color = "red";
+
+    buyBtn.disabled = true;
+    cartBtn.disabled = true;
+    buyBtn.style.opacity = "0.6";
+    cartBtn.style.opacity = "0.6";
+
+    notifyBtn.style.display = "inline-block";
+  }
+  // ⚠️ Low stock
+  else if (product.stock < 7) {
+    stockStatus.innerText = `⚠️ Only ${product.stock} left`;
+    stockStatus.style.color = "#ff9800";
+
+    notifyBtn.style.display = "none";
+  }
+  // ✅ Available
+  else {
+    stockStatus.innerText = "✅ In Stock";
+    stockStatus.style.color = "green";
+
+    notifyBtn.style.display = "none";
+  }
+}
+
+// 🔥 FETCH PRODUCT
+fetch("http://127.0.0.1:5000/products")
+  .then(res => res.json())
+  .then(data => {
+
+    // remove null
+    const products = data.filter(p => p);
+
+    // find by id
+    const product = products.find(p => p.id == id);
+
+    if (!product) {
+      document.body.innerHTML = "<h2>Product not found</h2>";
+      return;
+    }
+
+    window.currentProduct = product;
+
+    // 📝 TEXT
+    document.getElementById("name").innerText = product.name;
+    document.getElementById("desc").innerText = product.desc;
+    document.getElementById("oldPrice").innerText = product.old;
+    document.getElementById("price").innerText = product.price;
+    document.getElementById("discount").innerText =
+      getDiscount(product.old, product.price);
+
+    // 🖼 IMAGE GALLERY
+    const thumbs = document.getElementById("thumbs");
+    const mainImage = document.getElementById("mainImage");
+    mainImage.src = product.images[0];
+
+    product.images.forEach((src, index) => {
+      const img = document.createElement("img");
+      img.src = src;
+      if (index === 0) img.classList.add("active");
+
+      img.onclick = () => {
+        mainImage.src = src;
+        document.querySelectorAll(".thumbs img")
+          .forEach(i => i.classList.remove("active"));
+        img.classList.add("active");
+      };
+
+      thumbs.appendChild(img);
+    });
+
+    // 🎨 COLORS
+    const colorBox = document.getElementById("colors");
+    colorBox.innerHTML = "<b>Colors:</b> ";
+    product.colors.forEach(c => {
+      const span = document.createElement("span");
+      span.style.marginLeft = "8px";
+      span.innerText = c;
+      colorBox.appendChild(span);
+    });
+
+    // ✅ Check stock + expiry
+    checkStockAndExpiry(product);
+  });
+
+// 🛒 ADD TO CART
+document.getElementById("addToCartBtn").addEventListener("click", () => {
+  let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+  const product = { ...window.currentProduct, qty: 1 };
+
+  const index = cart.findIndex(p => p.id === product.id);
+  if (index > -1) cart[index].qty += 1;
+  else cart.push(product);
+
+  localStorage.setItem("cart", JSON.stringify(cart));
+  alert("✅ Product added to cart!");
+});
+
+// ⚡ BUY NOW
+document.getElementById("buyNowBtn").addEventListener("click", () => {
+  let product = { ...window.currentProduct, qty: 1 };
+  localStorage.setItem("buyItems", JSON.stringify([product]));
+  window.location.href = "buy.html";
+});
+
+// 🔔 NOTIFY ME
+document.getElementById("notifyBtn").addEventListener("click", () => {
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  if (!user) {
+    alert("Please login to get notified");
+    return;
+  }
+
+  alert("🔔 You will be notified when product is back in stock!");
+});
+</script>
+
+</body>
+</html>

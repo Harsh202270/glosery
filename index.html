@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grocery Store</title>
+<script>
+if(!localStorage.getItem("user")){
+  window.location.href = "signin.html";
+}
+</script>
+
+<style>
+body{
+  margin:0;
+  font-family:'Segoe UI',Arial;
+  background:linear-gradient(120deg,#f1fdf3,#e8f6ff);
+}
+
+/* HEADER */
+header{
+  background:#0aad0a;
+  color:white;
+  padding:14px 20px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  box-shadow:0 5px 15px rgba(0,0,0,.15);
+}
+header h1{
+  margin:0;
+  font-size:22px;
+}
+header input{
+  padding:10px 14px;
+  border-radius:30px;
+  border:none;
+  width:230px;
+  outline:none;
+  font-size:14px;
+}
+
+.color-text{
+  margin-top:6px;
+  font-size:13px;
+  color:#444;
+}
+.color-text span{
+  background:#eef6ff;
+  padding:3px 8px;
+  border-radius:12px;
+  margin-right:5px;
+  font-weight:500;
+}
+
+/* PRODUCTS GRID */
+.products{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:20px;
+  padding:25px;
+  max-width:1200px;
+  margin:auto;
+}
+
+/* CARD */
+.card{
+  background:white;
+  border-radius:15px;
+  padding:12px;
+  box-shadow:0 10px 25px rgba(0,0,0,.12);
+  cursor:pointer;
+  transition:.3s;
+  display:flex;
+  flex-direction:column;
+}
+.card:hover{
+  transform:translateY(-6px);
+}
+
+/* IMAGE */
+.card img{
+  width:100%;
+  height:160px;
+  object-fit:cover;
+  border-radius:12px;
+}
+
+/* TEXT */
+.card h3{
+  font-size:16px;
+  margin:10px 0 5px;
+  color:#222;
+}
+.old{
+  color:#888;
+  text-decoration:line-through;
+  font-size:14px;
+}
+.price{
+  color:#0aad0a;
+  font-weight:bold;
+  font-size:18px;
+}
+
+/* FAVORITE ICON */
+.fav-icon{
+  position:absolute;
+  top:10px;
+  right:10px;
+  font-size:22px;
+  cursor:pointer;
+  color:#ccc;
+  transition:.3s;
+}
+.fav-icon.active{
+  color:red;
+  transform:scale(1.2);
+}
+.card{
+  position:relative;
+}
+
+
+/* IMAGE GALLERY MODAL */
+.modal{
+  display:none;  /* hidden by default */
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.75);
+  z-index:999;
+  justify-content:center;
+  align-items:center;
+}
+
+.modal-content{
+  background:white;
+  padding:15px;
+  border-radius:14px;
+  max-width:95%;
+  max-height:90%;
+  overflow:auto;
+  position:relative;
+  display:flex;
+  flex-direction:column;
+}
+
+/* gallery grid */
+#galleryImages{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:15px;
+}
+
+#galleryImages img{
+  width:100%;
+  height:300px;      /* uniform size for all images */
+  object-fit:cover;
+  border-radius:12px;
+  background:#fff;
+  padding:5px;
+  box-shadow:0 4px 12px rgba(0,0,0,.12);
+  transition:.3s;
+}
+#galleryImages img:hover{
+  transform:scale(1.05);
+}
+
+.fav-icon{
+  position:absolute;
+  top:10px;
+  right:10px;
+  font-size:22px;
+  cursor:pointer;
+  transition:.3s;
+}
+.fav-icon.active{
+  transform:scale(1.2);
+}
+
+
+.close{
+  position:absolute;
+  top:8px;
+  right:14px;
+  font-size:28px;
+  cursor:pointer;
+  color:#333;
+}
+
+/* discount badge */
+.discount{
+  background:#ff5252;
+  color:white;
+  font-size:12px;
+  padding:3px 8px;
+  border-radius:15px;
+  margin-left:6px;
+}
+/* HEADER DROPDOWN MENU */
+.menu{
+  position:absolute;
+  top:55px;
+  right:20px;
+  background:rgb(0, 0, 0);
+  border-radius:10px;
+  box-shadow:0 10px 25px rgba(0,0,0,.15);
+  display:none;
+  flex-direction:column;
+  overflow:hidden;
+  z-index:1000;
+}
+
+.menu div{
+  padding:12px 18px;
+  cursor:pointer;
+  font-size:14px;
+  white-space:nowrap;
+}
+
+.menu div:hover{
+  background:#898989;
+}
+
+/* ===== BANNER ===== */
+.banner{
+  width:100%;
+  height:260px;
+  position:relative;
+  overflow:hidden;
+}
+
+.banner img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  transition:opacity .6s ease;
+  cursor:pointer;
+}
+
+/* arrows */
+.nav{
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  background:rgba(0,0,0,.5);
+  color:white;
+  border:none;
+  font-size:30px;
+  padding:6px 14px;
+  cursor:pointer;
+  border-radius:50%;
+  z-index:10;
+}
+
+.nav.left{ left:10px; }
+.nav.right{ right:10px; }
+
+
+
+/* BUTTON */
+.btn{
+  margin-top:15px;
+  background:linear-gradient(135deg,#0aad0a,#14c214);
+  color:white;
+  padding:10px;
+  border-radius:30px;
+  text-align:center;
+  font-weight:bold;
+  transition:.3s;
+}
+.btn:hover{
+  background:linear-gradient(135deg,#14c214,#0aad0a);
+}
+
+/* ===== PREMIUM FOOTER ===== */
+footer{
+  background:linear-gradient(135deg,#292929,#127112);
+  color:white;
+  margin-top:50px;
+  padding:50px 20px 20px;
+}
+
+.footer-container{
+  max-width:1200px;
+  margin:auto;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:35px;
+}
+
+.footer-box h3{
+  font-size:18px;
+  margin-bottom:15px;
+  position:relative;
+}
+
+.footer-box h3::after{
+  content:"";
+  width:40px;
+  height:3px;
+  background:#fff;
+  position:absolute;
+  left:0;
+  bottom:-6px;
+  border-radius:5px;
+}
+
+.footer-box p,
+.footer-box a{
+  font-size:14px;
+  color:#e9ffe9;
+  text-decoration:none;
+  display:block;
+  margin-bottom:8px;
+  transition:.3s;
+}
+
+.footer-box a:hover{
+  color:#ffffff;
+  transform:translateX(5px);
+}
+
+.footer-box p{
+  line-height:1.6;
+}
+
+/* icons row */
+.social{
+  display:flex;
+  gap:12px;
+  margin-top:10px;
+}
+
+.social span{
+  width:38px;
+  height:38px;
+  background:rgba(255,255,255,.2);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:50%;
+  cursor:pointer;
+  font-size:18px;
+  transition:.3s;
+}
+
+.social span:hover{
+  background:white;
+  color:#0aad0a;
+  transform:scale(1.1);
+}
+
+/* bottom bar */
+.footer-bottom{
+  text-align:center;
+  font-size:13px;
+  margin-top:35px;
+  padding-top:15px;
+  border-top:1px solid rgba(255,255,255,.3);
+  color:#eaffea;
+}
+
+
+/* MOBILE */
+@media(max-width:600px){
+  header{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+  header input{
+    margin-top:10px;
+    width:100%;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div id="menuBox" class="menu">
+  <div onclick="goWishlist()">❤️ Wishlist</div>
+  <div onclick="goOrders()">📦 My Orders</div>
+  <div onclick="goProfile()">👤 My Profile</div>
+  <div onclick="logoutUser()" style="color:#ff5252;">🚪 Logout</div>
+</div>
+
+
+</div>
+
+  <h1>🛒 Grocery Store</h1>
+  <div style="display:flex; align-items:center; gap:10px;">
+    <input type="text" id="searchBar" placeholder="🔍 Search products..." onkeyup="searchProducts()">
+    <div id="cartBtn" onclick="goToCart()" style="position:relative; cursor:pointer;">
+      🛒
+      <span id="cartCount" style="
+        position:absolute;
+        top:-8px;
+        right:-10px;
+        background:red;
+        color:white;
+        font-size:12px;
+        font-weight:bold;
+        width:18px;
+        height:18px;
+        border-radius:50%;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+      ">0</span>
+    </div>
+
+    
+    <!-- Three vertical dots -->
+  <div id="headerMenu" onclick="openHeaderMenu(event)" style="
+    font-size:20px;
+    cursor:pointer;
+    user-select:none;
+  ">⋮</div>
+
+  </div>
+</header>
+
+<!-- BANNER SLIDER -->
+<div class="banner">
+  <button class="nav left" onclick="prevBanner()">‹</button>
+  <img id="bannerImg" alt="Banner">
+  <button class="nav right" onclick="nextBanner()">›</button>
+</div>
+
+
+<div class="products" id="productList"></div>
+
+<footer>
+  <div class="footer-container">
+
+    <div class="footer-box">
+      <h3>🛒 Grocery Store</h3>
+      <p>
+        Fresh groceries delivered fast, safe and reliable.
+        Trusted by thousands of happy customers every day.
+      </p>
+      <div class="social">
+        <span>🌐</span>
+        <span>📘</span>
+        <span>📸</span>
+        <span>🐦</span>
+      </div>
+    </div>
+
+    <div class="footer-box">
+      <h3>Explore</h3>
+      <a href="index.html">Home</a>
+      <a href="wishlist.html">Wishlist</a>
+      <a href="cart.html">Cart</a>
+      <a href="orders.html">My Orders</a>
+    </div>
+
+    <div class="footer-box">
+      <h3>Support</h3>
+      <a href="#">Help Center</a>
+      <a href="#">Shipping Info</a>
+      <a href="#">Returns & Refunds</a>
+      <a href="#">Privacy Policy</a>
+    </div>
+
+    <div class="footer-box">
+      <h3>Contact Us</h3>
+      <p>📞 +91 78700 67126</p>
+      <p>📧 support@grocerystore.com</p>
+      <p>📍 India</p>
+    </div>
+
+  </div>
+
+  <div class="footer-bottom">
+    © 2025 Grocery Store • Designed by Harsh Vardhan
+  </div>
+</footer>
+
+
+
+<!-- IMAGE GALLERY MODAL -->
+<div id="imgModal" class="modal" onclick="closeModal()">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <span class="close" onclick="closeModal()">×</span>
+    <div id="galleryImages"></div>
+  </div>
+</div>
+
+
+<script>
+/* ===== BANNER SLIDER JS ===== */
+
+const bannerImages = [
+  "https://www.shutterstock.com/shutterstock/photos/2362872835/display_1500/stock-vector-supermarket-template-groceries-grocery-store-shopping-supermarket-fresh-food-home-delivery-2362872835.jpg",
+  "https://kalidas365itsolutions.wordpress.com/wp-content/uploads/2014/06/banner6.jpg?w=768",
+  "https://www.shutterstock.com/shutterstock/photos/2443027609/display_1500/stock-vector-always-fresh-fruits-and-veggies-banner-template-vector-apple-icon-background-salad-leaf-2443027609.jpg"
+];
+
+let bannerIndex = 0;
+const bannerImg = document.getElementById("bannerImg");
+
+// show first image
+bannerImg.src = bannerImages[bannerIndex];
+
+/* auto slide */
+let bannerTimer = setInterval(nextBanner, 2500);
+
+/* next */
+function nextBanner(){
+  bannerImg.style.opacity = 0;
+  setTimeout(()=>{
+    bannerIndex = (bannerIndex + 1) % bannerImages.length;
+    bannerImg.src = bannerImages[bannerIndex];
+    bannerImg.style.opacity = 1;
+  },600);
+}
+
+/* previous */
+function prevBanner(){
+  bannerImg.style.opacity = 0;
+  setTimeout(()=>{
+    bannerIndex = (bannerIndex - 1 + bannerImages.length) % bannerImages.length;
+    bannerImg.src = bannerImages[bannerIndex];
+    bannerImg.style.opacity = 1;
+  },600);
+}
+
+/* click action */
+bannerImg.addEventListener("click",()=>{
+  alert(`Banner ${bannerIndex + 1} clicked`);
+});
+
+/* pause on hover */
+bannerImg.addEventListener("mouseenter",()=> clearInterval(bannerTimer));
+bannerImg.addEventListener("mouseleave",()=>{
+  bannerTimer = setInterval(nextBanner,3000);
+});
+
+let products = [];
+
+// Fetch from backend
+async function fetchProducts(){
+  try{
+    const res = await fetch("http://127.0.0.1:5000/products");
+    const data = await res.json();
+
+    // ✅ Remove null values safely
+    products = data.filter(p => p !== null);
+
+    renderProducts();
+  }catch(err){
+    console.error("Error fetching products:", err);
+  }
+}
+
+
+const list=document.getElementById("productList");
+
+function getDiscount(oldPrice,newPrice){
+  const o=parseFloat(oldPrice.replace(/\D/g,""));
+  const n=parseFloat(newPrice.replace(/\D/g,""));
+  return Math.round(((o-n)/o)*100)+"% OFF";
+}
+
+function openHeaderMenu(e){
+  e.stopPropagation(); // prevent other clicks
+
+  // Simple alert for now
+  alert("Header menu clicked! You can add actions like:\n- My Orders\n- Wishlist\n- Settings");
+}
+
+function updateCartCount(){
+  let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+
+  let count = cart.reduce((sum,item) => sum + (item.qty || 1), 0);
+
+  document.getElementById("cartCount").innerText = count;
+}
+
+
+function renderProducts(filter = "") {
+  list.innerHTML = "";
+
+  const filtered = products.filter(p => {
+    if(!p) return false;
+
+    const search = filter.toLowerCase();
+
+    return (
+      (p.name && p.name.toLowerCase().includes(search)) ||
+      (p.id && String(p.id).toLowerCase().includes(search))
+    );
+  });
+
+  filtered.forEach(p => {
+    const discount = getDiscount(p.old, p.price);
+    const colors = p.colors ? p.colors.join(", ") : "N/A";
+
+    const favList = JSON.parse(localStorage.getItem("wishlist") || "[]");
+    const isFav = favList.includes(p.id);
+
+    const card = document.createElement("div");
+    card.className = "card";
+
+    card.innerHTML = `
+      <span class="fav-icon ${isFav ? "active" : ""}"
+            onclick="toggleFavorite(event, '${p.id}')">
+        ${isFav ? "❤️" : "🤍"}
+      </span>
+
+      <img src="${p.images[0]}" onclick="openGallery(event,'${p.id}')">
+
+      <h3>${p.name}</h3>
+      <div class="old">${p.old}</div>
+
+      <div class="price">
+        ${p.price}
+        <span class="discount">${discount}</span>
+      </div>
+
+      <div class="color-text">
+        <b>Color:</b> ${colors}
+      </div>
+
+      <div class="btn" onclick="openProduct('${p.id}')">
+        View Details
+      </div>
+    `;
+
+    list.appendChild(card);
+  });
+}
+
+function toggleFavorite(e, id){
+  e.stopPropagation();
+
+  let wishlist = JSON.parse(localStorage.getItem("wishlist") || "[]");
+
+  if(wishlist.includes(id)){
+    wishlist = wishlist.filter(x => x !== id);
+  }else{
+    wishlist.push(id);
+  }
+
+  localStorage.setItem("wishlist", JSON.stringify(wishlist));
+  renderProducts(document.getElementById("searchBar").value);
+}
+function openHeaderMenu(e){
+  e.stopPropagation();
+  const menu = document.getElementById("menuBox");
+  menu.style.display = menu.style.display === "flex" ? "none" : "flex";
+}
+function goWishlist(){
+  window.location.href = "wishlist.html";
+}
+
+function goOrders(){
+  window.location.href = "orders.html";
+}
+
+function goProfile(){
+  window.location.href = "profile.html";
+}
+document.addEventListener("click", () => {
+  document.getElementById("menuBox").style.display = "none";
+});
+
+function searchProducts(){
+  renderProducts(document.getElementById("searchBar").value);
+}
+
+function openProduct(id){
+  window.location.href="product.html?id="+id;
+}
+
+function openGallery(e, id){
+  e.stopPropagation();
+
+  const p = products.find(x => x.id === id);
+  if(!p) return;
+
+  const gallery = document.getElementById("galleryImages");
+  gallery.innerHTML = "";
+
+  p.images.forEach(src=>{
+    const img=document.createElement("img");
+    img.src=src;
+    gallery.appendChild(img);
+  });
+  document.getElementById("imgModal").style.display="flex";
+}
+function logoutUser(){
+  if(!confirm("Are you sure you want to logout?")) return;
+
+  // Notify server
+  fetch("user_api.py",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ action:"logout" })
+  }).finally(()=>{
+    // Clear client data
+    localStorage.removeItem("user");
+    localStorage.removeItem("cart");
+    localStorage.removeItem("wishlist");
+
+    // Redirect to signin
+    window.location.href="signin.html";
+  });
+}
+
+function closeModal(){
+  document.getElementById("imgModal").style.display = "none";
+}
+function goToCart(){
+  window.location.href="cart.html";
+}
+
+fetchProducts();
+updateCartCount();
+window.addEventListener("storage", updateCartCount);
+</script>
+
+</body>
+</html>

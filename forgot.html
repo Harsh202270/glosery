@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Forgot Password</title>
+<style>
+* { box-sizing: border-box; font-family:'Segoe UI', Arial; }
+body{
+  margin:0;
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background: linear-gradient(135deg,#a8edea,#fed6e3);
+}
+
+/* CARD */
+.card{
+  width:420px;
+  background:#fff;
+  border-radius:20px;
+  padding:40px 30px;
+  box-shadow: 0 20px 50px rgba(0,0,0,.1);
+  transition: all .3s ease;
+}
+.card:hover{
+  transform: translateY(-5px);
+}
+
+/* TITLE */
+.title{
+  text-align:center;
+  font-size:28px;
+  font-weight:700;
+  color:#0aad6b;
+  margin-bottom:15px;
+}
+.subtitle{
+  text-align:center;
+  color:#666;
+  margin-bottom:25px;
+  font-size:14px;
+}
+
+/* INPUTS */
+.input{
+  width:100%;
+  padding:14px 18px;
+  border-radius:25px;
+  border:1px solid #ccc;
+  margin-bottom:15px;
+  font-size:15px;
+  transition: all .3s ease;
+}
+.input:focus{
+  border-color:#0aad6b;
+  box-shadow: 0 0 10px rgba(10,173,107,.2);
+  outline:none;
+}
+
+/* BUTTONS */
+button{
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:25px;
+  background: linear-gradient(135deg,#0aad6b,#1dd1a1);
+  color:white;
+  font-weight:700;
+  font-size:16px;
+  cursor:pointer;
+  transition: all .3s ease;
+}
+button:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0,0,0,.2);
+}
+
+/* ERROR MESSAGE */
+#error{
+  color:red;
+  font-size:14px;
+  margin-bottom:10px;
+  text-align:center;
+  min-height:18px;
+}
+
+/* HIDDEN BOXES */
+.hidden{ display:none; }
+
+/* STEP BOXES */
+#phoneBox, #passBox{
+  margin-top:10px;
+  animation: fadeIn 0.5s ease forwards;
+}
+
+/* ANIMATION */
+@keyframes fadeIn{
+  from { opacity:0; transform:translateY(15px);}
+  to { opacity:1; transform:translateY(0);}
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+  <div class="title">🔐 Forgot Password</div>
+  <div class="subtitle">Recover your account safely</div>
+  <div id="error"></div>
+
+  <!-- STEP 1: Email -->
+  <input id="email" class="input" placeholder="Enter registered email">
+  <button id="emailBtn">Next</button>
+
+  <!-- STEP 2: Phone -->
+  <div id="phoneBox" class="hidden">
+    <input id="phone" class="input" placeholder="Enter registered phone number">
+    <button id="phoneBtn">Verify Phone</button>
+  </div>
+
+  <!-- STEP 3: New Password -->
+  <div id="passBox" class="hidden">
+    <input id="newpass" type="password" class="input" placeholder="New Password">
+    <input id="confpass" type="password" class="input" placeholder="Confirm Password">
+    <button id="passBtn">Update Password</button>
+  </div>
+</div>
+
+<script>
+let emailVal = "";
+
+// STEP 1: check email
+document.getElementById("emailBtn").onclick = async () => {
+  const email = document.getElementById("email").value.trim();
+  const error = document.getElementById("error");
+  if(!email){ error.innerText="Enter email"; return; }
+
+  const res = await fetch("http://127.0.0.1:5000/user", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({action:"forgot_password", email})
+  });
+  const data = await res.json();
+  if(data.status==="error"){ error.innerText = data.message; return; }
+
+  error.innerText="";
+  emailVal = email;
+  document.getElementById("phoneBox").classList.remove("hidden");
+};
+
+// STEP 2: verify phone
+document.getElementById("phoneBtn").onclick = async () => {
+  const phone = document.getElementById("phone").value.trim();
+  const error = document.getElementById("error");
+  if(!phone){ error.innerText="Enter phone number"; return; }
+
+  const res = await fetch("http://127.0.0.1:5000/user", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({action:"forgot_password", email: emailVal, phone})
+  });
+  const data = await res.json();
+  if(data.status==="error"){ error.innerText = data.message; return; }
+
+  error.innerText="";
+  document.getElementById("passBox").classList.remove("hidden");
+};
+
+// STEP 3: update password
+document.getElementById("passBtn").onclick = async () => {
+  const newpass = document.getElementById("newpass").value.trim();
+  const confpass = document.getElementById("confpass").value.trim();
+  const error = document.getElementById("error");
+  if(!newpass || !confpass){ error.innerText="Fill all fields"; return; }
+  if(newpass !== confpass){ error.innerText="Passwords do not match"; return; }
+
+  const phone = document.getElementById("phone").value.trim();
+
+  const res = await fetch("http://127.0.0.1:5000/user", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      action:"forgot_password",
+      email: emailVal,
+      phone,
+      new_password: newpass
+    })
+  });
+
+  const data = await res.json();
+  if(data.status==="error"){ error.innerText = data.message; return; }
+
+  alert("Password updated successfully");
+  window.location.href = "signin.html";
+};
+</script>
+
+</body>
+</html>

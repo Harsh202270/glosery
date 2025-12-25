@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>My Orders</title>
+
+<style>
+body{
+  margin:0;
+  font-family:'Segoe UI',Arial;
+  background:linear-gradient(120deg,#f1fdf3,#e8f6ff);
+}
+header{
+  background:#0aad0a;
+  color:white;
+  padding:15px;
+  text-align:center;
+  font-size:22px;
+  font-weight:bold;
+}
+.order{
+  background:white;
+  margin:15px auto;
+  padding:12px;
+  border-radius:14px;
+  max-width:800px;
+  box-shadow:0 10px 25px rgba(0,0,0,.12);
+  display:flex;
+  gap:15px;
+  align-items:center;
+  cursor:pointer;
+  justify-content:space-between;
+}
+.left{
+  display:flex;
+  gap:15px;
+  align-items:center;
+}
+.order img{
+  width:70px;
+  height:70px;
+  border-radius:10px;
+  object-fit:cover;
+}
+.remove{
+  background:#ff5252;
+  color:white;
+  padding:6px 12px;
+  border-radius:20px;
+  font-size:13px;
+  cursor:pointer;
+}
+.remove:hover{
+  opacity:.85;
+}
+.empty{
+  text-align:center;
+  margin-top:40px;
+  font-size:18px;
+}
+</style>
+</head>
+
+<body>
+
+<header>📦 My Orders</header>
+<div id="orders"></div>
+
+<script>
+let orders = JSON.parse(localStorage.getItem("orders") || "[]");
+const box = document.getElementById("orders");
+
+function renderOrders(){
+  box.innerHTML="";
+
+  if(orders.length===0){
+    box.innerHTML="<div class='empty'>No orders yet 📭</div>";
+    return;
+  }
+
+  [...orders].reverse().forEach(o=>{
+    const item=o.items[0];
+    const img=item.images?.[0] || "https://via.placeholder.com/70";
+
+    const div=document.createElement("div");
+    div.className="order";
+
+    div.onclick=()=>location.href=`order-details.html?oid=${o.orderId}`;
+
+    div.innerHTML=`
+      <div class="left">
+        <img src="${img}">
+        <div>
+          <b>${item.name}</b><br>
+          ${o.items.length>1?`+${o.items.length-1} more items`:""}
+        </div>
+      </div>
+      <div class="remove" onclick="removeOrder(event,'${o.orderId}')">Remove</div>
+    `;
+
+    box.appendChild(div);
+  });
+}
+
+function removeOrder(e,id){
+  e.stopPropagation(); // prevent opening details page
+
+  if(!confirm("Delete this order?")) return;
+
+  orders = orders.filter(o=>o.orderId!==id);
+  localStorage.setItem("orders",JSON.stringify(orders));
+  renderOrders();
+}
+
+renderOrders();
+</script>
+
+</body>
+</html>

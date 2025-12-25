@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Grocery Shop – Sign In</title>
+<script>
+if(localStorage.getItem("user")){
+  window.location.href = "index.html";
+}
+</script>
+<style>
+body{
+  margin:0;
+  font-family:'Segoe UI',Arial;
+  background:linear-gradient(135deg,#f1fdf3,#e8f6ff);
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.wrapper{
+  width:850px;
+  height:420px;
+  background:#fff;
+  border-radius:18px;
+  box-shadow:0 15px 40px rgba(0,0,0,.15);
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  overflow:hidden;
+}
+
+/* LEFT SLIDER */
+.slider{
+  position:relative;
+  width:100%;
+  height:100%;
+}
+.slider img{
+  position:absolute;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  opacity:0;
+  transition:opacity 1s;
+}
+.slider img.active{
+  opacity:1;
+}
+
+/* RIGHT FORM */
+.form{
+  padding:30px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+.logo{
+  font-size:26px;
+  font-weight:bold;
+  color:#0aad0a;
+  text-align:center;
+}
+.subtitle{
+  text-align:center;
+  color:#666;
+  margin-bottom:20px;
+}
+input{
+  padding:11px;
+  border-radius:22px;
+  border:1px solid #ccc;
+  margin:8px 0;
+}
+button{
+  padding:12px;
+  background:#2196f3;
+  color:white;
+  border:none;
+  border-radius:25px;
+  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
+  margin-top:10px;
+}
+button:hover{background:#1b7fd6}
+.footer{
+  text-align:center;
+  margin-top:15px;
+  font-size:14px;
+}
+a{
+  color:#0aad0a;
+  text-decoration:none;
+  font-weight:500;
+}
+
+/* RESPONSIVE */
+@media(max-width:800px){
+  .wrapper{
+    grid-template-columns:1fr;
+    height:auto;
+  }
+  .slider{height:200px}
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrapper">
+
+  <!-- LEFT IMAGE SLIDER -->
+  <div class="slider">
+    <img src="https://images.pexels.com/photos/2733918/pexels-photo-2733918.jpeg" class="active">
+    <img src="https://images.pexels.com/photos/264636/pexels-photo-264636.jpeg">
+    <img src="https://images.pexels.com/photos/3962285/pexels-photo-3962285.jpeg">
+    <img src="https://images.pexels.com/photos/5473023/pexels-photo-5473023.jpeg">
+  </div>
+
+  <!-- RIGHT LOGIN FORM -->
+  <div class="form">
+    <div class="logo">🥦 Grocery Shop</div>
+    <div class="subtitle">Fresh groceries, daily</div>
+
+    <input id="email" placeholder="Email Address">
+    <input id="password" type="password" placeholder="Password">
+
+    <button onclick="signin()">Sign In</button>
+
+    <div style="text-align:right;margin-top:8px;">
+      <a href="forgot.html">Forgot Password?</a>
+    </div>
+
+    <div class="footer">
+      New customer?
+      <a href="signup.html">Create Account</a>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const slides = document.querySelectorAll(".slider img");
+let index = 0;
+
+function showSlide(i){
+  slides.forEach((img, idx) => {
+    img.classList.toggle("active", idx === i);
+  });
+}
+
+// Auto-slide every 3 seconds
+setInterval(()=>{
+  index = (index + 1) % slides.length;
+  showSlide(index);
+}, 3000);
+
+function signin(){
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
+
+  if(!email || !password){
+    alert("Please fill all fields");
+    return;
+  }
+
+  fetch("http://127.0.0.1:5000/user",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({
+      action:"signin",   // <-- must match backend
+      email: email,
+      password: password
+    })
+  })
+  .then(res=>res.json())
+  .then(data=>{
+    if(data.status==="success"){
+      localStorage.setItem("user", JSON.stringify(data.user));
+      window.location.href="index.html";
+    }else{
+      alert(data.message);
+    }
+  })
+  .catch(()=>{
+    alert("Server error. Check backend.");
+  });
+}
+</script>
+
+
+</body>
+</html>

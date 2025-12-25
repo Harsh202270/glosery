@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Add Product</title>
+<style>
+body{
+  font-family: 'Segoe UI', Arial;
+  background: linear-gradient(135deg, #d4fc79, #96e6a1);
+  margin:0;
+  padding:20px;
+}
+
+/* Container */
+.container{
+  max-width:650px;
+  margin:auto;
+  background:#fff;
+  padding:25px 30px;
+  border-radius:20px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+  transition: transform 0.3s;
+}
+.container:hover{
+  transform: translateY(-5px);
+}
+
+/* Heading */
+h2{
+  text-align:center;
+  color:#0aad0a;
+  margin-bottom:25px;
+}
+
+/* Labels & Inputs */
+.label{
+  font-weight:bold;
+  margin-top:15px;
+  display:block;
+  position: relative;
+}
+.label::after{
+  content:"*";
+  color:red;
+  margin-left:4px;
+}
+
+input, textarea, select{
+  width:100%;
+  padding:12px;
+  margin-top:6px;
+  border-radius:10px;
+  border:1px solid #ccc;
+  font-size:14px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+input:focus, textarea:focus{
+  border-color:#0aad0a;
+  box-shadow:0 0 8px rgba(10,173,10,0.3);
+  outline:none;
+}
+
+/* Button */
+button{
+  width:100%;
+  padding:14px;
+  margin-top:20px;
+  background: linear-gradient(135deg,#0aad0a,#14c214);
+  color:white;
+  border:none;
+  border-radius:30px;
+  font-weight:bold;
+  font-size:16px;
+  cursor:pointer;
+  transition: background 0.3s, transform 0.2s;
+}
+button:hover{
+  background: linear-gradient(135deg,#14c214,#0aad0a);
+  transform: translateY(-2px);
+}
+
+/* Messages */
+#error, #success{
+  text-align:center;
+  margin-top:12px;
+  font-weight:bold;
+  font-size:14px;
+}
+#error{ color:red; }
+#success{
+  color:green;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+}
+#success svg{
+  width:20px;
+  height:20px;
+  fill:green;
+}
+
+/* Responsive */
+@media(max-width:600px){
+  .container{
+    padding:20px;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+<h2>Add New Product</h2>
+<form id="productForm">
+    <label class="label">Name:</label>
+    <input type="text" name="name" placeholder="Enter product name" required>
+
+    <label class="label">Description:</label>
+    <textarea name="desc" rows="3" placeholder="Enter product description" required></textarea>
+
+    <label class="label">Old Price (₹):</label>
+    <input type="text" name="old" placeholder="Enter old price" required>
+
+    <label class="label">Price (₹):</label>
+    <input type="text" name="price" placeholder="Enter selling price" required>
+
+    <label class="label">Select Types :</label>
+    <select name="type" required>
+        <option value="" disabled selected>Select product type</option>
+        <option value="Electronics">Electronics</option>
+        <option value="Clothing">Clothing</option>
+        <option value="Books">Books</option>
+        <option value="Home Appliances">Home Appliances</option>
+        <option value="Toys">Toys</option>
+        <option value="Sports">Sports</option>
+    </select>
+
+    <label class="label">Colors (comma separated):</label>
+    <input type="text" name="colors" placeholder="White, Blue, Red" required>
+
+
+    <label class="label">Images (at least 3, comma separated URLs):</label>
+    <textarea name="images" rows="3" placeholder="https://example.com/img1.jpg, https://example.com/img2.jpg, https://example.com/img3.jpg" required></textarea>
+
+    <label class="label">Stock:</label>
+    <input type="number" name="stock" min="1" placeholder="Enter stock quantity" required>
+
+    <label class="label">Expiry Date:</label>
+    <input type="date" name="expiryDate" required>
+
+    <button type="submit">Add Product</button>
+</form>
+
+<div id="error"></div>
+<div id="success"></div>
+</div>
+
+<script>
+function generateID(){
+    // Generate random unique ID (timestamp + random number)
+    return 'P' + Date.now().toString().slice(-5) + Math.floor(Math.random()*100);
+}
+
+document.getElementById("productForm").addEventListener("submit", async function(e){
+    e.preventDefault();
+    document.getElementById("error").innerText="";
+    document.getElementById("success").innerHTML="";
+
+    const formData = new FormData(this);
+    const data = {};
+    formData.forEach((v,k)=> data[k] = v.trim());
+
+    // Generate auto product ID
+    const id = generateID();
+    data.id = id;
+    data.productId = id; // Same as id
+
+    // Split colors and images into arrays
+    if(data.colors) data.colors = data.colors.split(",").map(c=>c.trim());
+    if(data.images) data.images = data.images.split(",").map(i=>i.trim());
+
+    // Validation: At least 3 images
+    if(!data.images || data.images.length < 3){
+        document.getElementById("error").innerText = "Please add at least 3 images!";
+        return;
+    }
+
+    // Validation: All fields required
+    const requiredFields = ["name","desc","old","price","colors","stock","expiryDate"];
+    for(let field of requiredFields){
+        if(!data[field] || (Array.isArray(data[field]) && data[field].length===0)){
+            document.getElementById("error").innerText = "Please fill all mandatory fields!";
+            return;
+        }
+    }
+
+    try{
+        const res = await fetch("http://127.0.0.1:5000/add-product", { // Flask API endpoint
+            method:"POST",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        if(result.status === "success"){
+            document.getElementById("success").innerHTML = `
+                <svg viewBox="0 0 24 24">
+                    <path d="M9 16.2l-3.5-3.5L4 14.2l5 5 12-12-1.4-1.4z"/>
+                </svg>
+                Product added successfully! ID & Product ID: <b>${id}</b> | Stock: ${data.stock} | Expiry: ${data.expiryDate}
+            `;
+            this.reset();
+        } else {
+            document.getElementById("error").innerText = result.message;
+        }
+    } catch(err){
+        document.getElementById("error").innerText = "Error saving product!";
+        console.error(err);
+    }
+});
+</script>
+
+</body>
+</html>

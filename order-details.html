@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Order Details</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+  margin:0;
+  font-family:'Segoe UI',Arial;
+  background:linear-gradient(120deg,#f1fdf3,#e8f6ff);
+}
+
+/* HEADER */
+header{
+  background:#0aad0a;
+  color:white;
+  padding:16px;
+  text-align:center;
+  font-size:22px;
+  font-weight:bold;
+  position:relative;
+}
+.back{
+  position:absolute;
+  left:15px;
+  top:50%;
+  transform:translateY(-50%);
+  cursor:pointer;
+  font-size:16px;
+}
+
+/* MAIN BOX */
+.box{
+  max-width:900px;
+  margin:20px auto;
+  background:white;
+  padding:25px;
+  border-radius:18px;
+  box-shadow:0 15px 40px rgba(0,0,0,.12);
+}
+
+/* SECTIONS */
+.section{
+  margin-bottom:25px;
+}
+.section h3{
+  margin:0 0 10px;
+  color:#333;
+  border-bottom:2px solid #e5f7ea;
+  padding-bottom:6px;
+}
+
+/* ADDRESS */
+.address{
+  background:#f7fdf9;
+  padding:15px;
+  border-radius:12px;
+  line-height:1.6;
+}
+
+/* ITEMS */
+.item{
+  display:flex;
+  gap:15px;
+  padding:12px 0;
+  border-bottom:1px solid #eee;
+}
+.item:last-child{border-bottom:none;}
+.item img{
+  width:70px;
+  height:70px;
+  border-radius:12px;
+  object-fit:cover;
+}
+.item b{color:#222}
+
+/* TRACKING */
+.track{
+  background:#f5fdf7;
+  padding:18px;
+  border-radius:14px;
+}
+.step{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin:10px 0;
+  font-size:15px;
+}
+.step span{
+  width:22px;
+  height:22px;
+  border-radius:50%;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  background:#d0ead7;
+  color:#0aad0a;
+  font-weight:bold;
+}
+.step.active span{
+  background:#0aad0a;
+  color:white;
+}
+.step.pending span{
+  background:#ccc;
+  color:#666;
+}
+
+/* BILL */
+.bill{
+  background:#f9fffb;
+  padding:15px;
+  border-radius:14px;
+}
+.bill div{
+  display:flex;
+  justify-content:space-between;
+  margin:6px 0;
+}
+.total{
+  font-size:20px;
+  font-weight:bold;
+  color:#0aad0a;
+}
+
+/* BADGE */
+.badge{
+  display:inline-block;
+  background:#e6f9ee;
+  color:#0aad0a;
+  padding:6px 14px;
+  border-radius:20px;
+  font-size:14px;
+  font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="back" onclick="history.back()">← Back</div>
+  📦 Order Details
+</header>
+
+<div class="box" id="detail"></div>
+
+<script>
+const params = new URLSearchParams(location.search);
+const oid = params.get("oid");
+
+const orders = JSON.parse(localStorage.getItem("orders") || "[]");
+const order = orders.find(o => o.orderId === oid);
+
+if(!order){
+  document.getElementById("detail").innerHTML="<h3>Order not found ❌</h3>";
+}else{
+  document.getElementById("detail").innerHTML = `
+    <div class="section">
+      <h3>Order Info</h3>
+      <p><b>Order ID:</b> ${order.orderId}</p>
+      <p><b>Date:</b> ${order.date}</p>
+      <span class="badge">Payment Successful</span>
+    </div>
+
+    <div class="section">
+      <h3>Delivery Address</h3>
+      <div class="address">
+        <b>${order.delivery.name}</b><br>
+        📞 ${order.delivery.phone}<br>
+        🏠 ${order.delivery.addr}<br>
+        ${order.delivery.city || ""} ${order.delivery.state || ""} - ${order.delivery.pincode || ""}
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Items (${order.items.length})</h3>
+      ${order.items.map(i=>{
+        const q=i.qty||1;
+        return `
+          <div class="item">
+            <img src="${i.images?.[0] || 'https://via.placeholder.com/70'}">
+            <div>
+              <b>${i.name}</b><br>
+              Qty: ${q}<br>
+              Price: ${i.price}
+            </div>
+          </div>`;
+      }).join("")}
+    </div>
+
+    <div class="section">
+      <h3>Order Tracking</h3>
+      <div class="track">
+        <div class="step active"><span>✓</span> Order Confirmed</div>
+        <div class="step active"><span>✓</span> Packed</div>
+        <div class="step active"><span>✓</span> Shipped</div>
+        <div class="step pending"><span>•</span> Out for Delivery</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Payment Summary</h3>
+      <div class="bill">
+        <div><span>Subtotal</span><span>₹${order.bill.s}</span></div>
+        <div><span>Tax</span><span>₹${order.bill.tax}</span></div>
+        <div><span>Delivery</span><span>₹${order.bill.ship}</span></div>
+        <div><span>Platform Fee</span><span>₹3</span></div>
+        <div><span>Discount</span><span>-₹${order.bill.discount}</span></div>
+        <hr>
+        <div class="total"><span>Total Paid</span><span>₹${order.bill.total}</span></div>
+      </div>
+    </div>
+  `;
+}
+</script>
+
+</body>
+</html>

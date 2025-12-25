@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Home</title>
+
+<style>
+body{
+  margin:0;
+  font-family:'Segoe UI', Arial;
+  background:linear-gradient(135deg,#eafff1,#e6f5ff);
+  min-height:100vh;
+}
+
+/* HEADER */
+.header{
+  position:fixed;
+  top:0;
+  left:0;
+  right:0;
+  height:60px;
+  background:#fff;
+  box-shadow:0 4px 12px rgba(0,0,0,.1);
+  display:flex;
+  align-items:center;
+  padding:0 15px;
+  z-index:10;
+}
+
+/* BACK BUTTON */
+.back-btn{
+  background:none;
+  border:none;
+  font-size:20px;
+  cursor:pointer;
+  color:#0aad0a;
+  font-weight:bold;
+}
+
+/* CENTER TITLE */
+.header-title{
+  flex:1;
+  text-align:center;
+  font-size:20px;
+  font-weight:bold;
+  color:#0aad0a;
+}
+
+/* MAIN */
+.main{
+  margin-top:80px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:20px;
+}
+
+.main h1{
+  color:#0aad0a;
+  margin-bottom:10px;
+}
+
+.main p{
+  color:#555;
+  margin-bottom:25px;
+}
+
+/* BUTTON */
+.home-btn{
+  padding:14px 30px;
+  background:linear-gradient(135deg,#0aad0a,#14c214);
+  color:white;
+  border:none;
+  border-radius:30px;
+  font-size:18px;
+  font-weight:bold;
+  cursor:pointer;
+  text-decoration:none;
+}
+
+.home-btn:hover{
+  background:linear-gradient(135deg,#14c214,#0aad0a);
+}
+
+/* RESPONSIVE */
+@media(max-width:600px){
+  .header-title{font-size:18px;}
+}
+</style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <button class="back-btn" onclick="history.back()">← Back</button>
+  <div class="header-title">Home</div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+  <h1>Welcome to Grocery Store 🛒</h1>
+  <p>Fresh products • Best prices • Fast delivery</p>
+
+  <a href="index.html" class="home-btn">🏠 Go to Store</a>
+</div>
+
+</body>
+</html>

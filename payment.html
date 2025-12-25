@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payment</title>
+<style>
+body{font-family:'Segoe UI',Arial;background:#f4f6fa;margin:0;padding:20px;}
+.container{max-width:500px;margin:auto;background:#fff;padding:25px;border-radius:18px;box-shadow:0 15px 40px rgba(0,0,0,.12);}
+h2{text-align:center;color:#0aad0a;margin-bottom:20px;}
+.payment-option{padding:12px 18px;margin:10px 0;background:#0aad0a;color:white;border-radius:12px;cursor:pointer;text-align:center;font-weight:bold;}
+#qrContainer{text-align:center;margin-top:20px;}
+#qrContainer canvas{margin-top:10px;}
+</style>
+</head>
+<body>
+
+<div class="container">
+<h2>💳 Select Payment</h2>
+
+<div class="payment-option" onclick="choosePayment('UPI')">UPI</div>
+<div class="payment-option" onclick="choosePayment('PhonePay')">PhonePay</div>
+<div class="payment-option" onclick="choosePayment('Debit Card')">Debit Card</div>
+
+<div id="qrContainer" style="display:none;">
+  <h3>Scan this QR to pay</h3>
+  <canvas id="qrcode"></canvas>
+  <button onclick="confirmPayment()" style="margin-top:15px;padding:10px 18px;border:none;border-radius:12px;background:#0aad0a;color:white;font-weight:bold;cursor:pointer;">I Paid</button>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<script>
+let bill = JSON.parse(localStorage.getItem("bill")||'{"total":0}');
+let delivery = JSON.parse(localStorage.getItem("delivery")||'{"phone":"9876543210"}');
+let selectedPayment = "";
+
+// Ensure total is numeric
+let totalAmount = parseFloat(bill.total || 0);
+
+function choosePayment(type){
+    selectedPayment = type;
+    document.querySelectorAll('.payment-option').forEach(el=>el.style.display='none');
+    document.getElementById('qrContainer').style.display='block';
+
+    let qrData = `phone=${delivery.phone}&amount=${totalAmount.toFixed(2)}`;
+
+    QRCode.toCanvas(document.getElementById('qrcode'), qrData, {width:200}, function(err){
+        if(err) console.error(err);
+        else console.log("QR generated:", qrData);
+    });
+}
+
+function confirmPayment(){
+    localStorage.setItem("payment", JSON.stringify({
+        method: selectedPayment,
+        qrData: `phone=${delivery.phone}&amount=${totalAmount.toFixed(2)}`,
+        timestamp: new Date().toLocaleString()
+    }));
+    window.location.href="confirm.html"; // Redirect to confirm page
+}
+</script>
+</body>
+</html>

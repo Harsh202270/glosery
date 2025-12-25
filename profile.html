@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>My Profile</title>
+
+<style>
+body{
+  margin:0;
+  font-family:'Segoe UI',Arial;
+  background:linear-gradient(120deg,#f1fdf3,#e8f6ff);
+}
+header{
+  background:#0aad0a;
+  color:white;
+  padding:15px;
+  text-align:center;
+  font-size:22px;
+  font-weight:bold;
+}
+.box{
+  max-width:600px;
+  margin:30px auto;
+  background:white;
+  padding:25px;
+  border-radius:18px;
+  box-shadow:0 10px 25px rgba(0,0,0,.12);
+}
+.row{
+  margin-bottom:15px;
+}
+.row label{
+  font-size:13px;
+  color:#555;
+}
+.row div{
+  font-size:16px;
+  font-weight:500;
+}
+.btn{
+  margin-top:20px;
+  background:#0aad0a;
+  color:white;
+  padding:12px;
+  border-radius:30px;
+  text-align:center;
+  font-weight:bold;
+  cursor:pointer;
+}
+.btn.logout{
+  background:#ff5252;
+}
+.empty{
+  text-align:center;
+  margin-top:50px;
+  font-size:18px;
+}
+</style>
+</head>
+
+<body>
+
+<header>👤 My Profile</header>
+
+<div id="profile"></div>
+
+<script>
+const user = JSON.parse(localStorage.getItem("user"));
+const box = document.getElementById("profile");
+
+if(!user){
+  box.innerHTML = "<div class='empty'>No profile found 😕</div>";
+}else{
+  box.innerHTML = `
+    <div class="box">
+      <div class="row">
+        <label>Full Name</label>
+        <div>${user.name}</div>
+      </div>
+
+      <div class="row">
+        <label>Phone Number</label>
+        <div>${user.phone}</div>
+      </div>
+
+      <div class="row">
+        <label>Email</label>
+        <div>${user.email}</div>
+      </div>
+
+      <div class="row">
+        <label>Address</label>
+        <div>${user.address}</div>
+      </div>
+
+      <div class="btn" onclick="goOrders()">📦 My Orders</div>
+      <div class="btn logout" onclick="logout()">🚪 Logout</div>
+    </div>
+  `;
+}
+
+function goOrders(){
+  location.href = "orders.html";
+}
+function logout(){
+  if(confirm("Are you sure you want to logout?")){
+    localStorage.clear();
+    location.href = "index.html";
+  }
+}
+</script>
+
+</body>
+</html>

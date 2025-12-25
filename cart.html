@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shopping Cart</title>
+<style>
+body{font-family:'Segoe UI',Arial;background: linear-gradient(135deg,#eafff1,#e6f5ff);margin:0;padding:20px;}
+.container{max-width:900px;margin:auto;background:#fff;padding:25px;border-radius:18px;box-shadow:0 15px 40px rgba(0,0,0,.12);}
+h2{text-align:center;color:#0aad0a;margin-bottom:20px;}
+.cart-item{display:flex;gap:15px;padding:12px 0;border-bottom:1px solid #eee;align-items:center;}
+.cart-item img{width:80px;height:80px;border-radius:12px;object-fit:cover;}
+.item-info{flex:1;}
+.item-info h4{margin:0;color:#222;}
+.price{color:#0aad0a;font-weight:bold;}
+.qty{width:55px;padding:6px;border-radius:8px;border:1px solid #ccc;}
+.remove-btn{background:#ff5252;color:white;border:none;padding:6px 14px;border-radius:20px;cursor:pointer;}
+.section{margin-top:25px;background:#f9f9f9;padding:18px;border-radius:14px;}
+.section h3{margin-top:0;color:#333;}
+input,select{width:100%;padding:10px;margin:6px 0;border-radius:10px;border:1px solid #ccc;}
+.save-btn{background:#0aad0a;color:white;border:none;padding:10px;width:100%;border-radius:25px;margin-top:10px;cursor:pointer;font-weight:bold;}
+.total-box{background:#eefaf0;padding:18px;border-radius:14px;margin-top:20px;}
+.total-box div{display:flex;justify-content:space-between;margin:6px 0;}
+.checkout-btn{width:100%;background:#0aad0a;color:white;padding:14px;border:none;border-radius:30px;font-size:17px;font-weight:bold;cursor:pointer;margin-top:15px;}
+.checkout-btn:hover{background:#14c214;}
+.coupon-wrapper{position:relative;}
+.coupon-wrapper button{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:#0aad0a;color:white;padding:6px 14px;border-radius:20px;cursor:pointer;}
+#couponMsg{margin-top:6px;font-size:14px;}
+.success{color:green;}
+.error{color:red;}
+</style>
+</head>
+<body>
+
+<div class="container">
+<h2>🛒 Shopping Cart</h2>
+
+<div id="cartList"></div>
+
+<!-- DELIVERY -->
+<div class="section">
+<h3>🚚 Delivery Address</h3>
+
+<select id="savedAddress" onchange="fillAddress()">
+  <option value="">Select Saved Address</option>
+</select>
+
+<input id="name" placeholder="Full Name">
+<input id="phone" placeholder="Phone (10 digits)" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+<input id="altPhone" placeholder="Alternate Phone (Optional)" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+<input id="address" placeholder="House / Street / Area">
+<input id="city" placeholder="City">
+<input id="state" placeholder="State">
+<input id="pincode" placeholder="Pincode (6 digits)" maxlength="6" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+
+<button class="save-btn" onclick="saveAddress()">💾 Save Address</button>
+</div>
+
+<!-- COUPON -->
+<div class="section">
+<h3>🎁 Coupon</h3>
+<div class="coupon-wrapper">
+  <input id="coupon" placeholder="Enter coupon code">
+  <button onclick="applyCoupon()">Apply</button>
+</div>
+<div id="couponMsg"></div>
+</div>
+
+<!-- TOTAL -->
+<div class="total-box">
+  <div><b>Subtotal</b><b id="subtotal">₹0</b></div>
+  <div><b>Tax (3%)</b><b id="tax">₹0</b></div>
+  <div><b>Handling</b><b>₹10</b></div>
+  <div><b>Place</b><b>₹3</b></div>
+  <div><b>Discount</b><b id="discountVal">₹0</b></div>
+  <div style="font-size:18px"><b>Total</b><b id="total">₹0</b></div>
+</div>
+
+<button class="checkout-btn" onclick="buyNow()">Proceed to Buy</button>
+</div>
+
+<script>
+let cart = JSON.parse(localStorage.getItem("cart")||"[]");
+let addresses = JSON.parse(localStorage.getItem("addresses")||"[]");
+let couponApplied=false;
+
+// Render cart
+function renderCart(){
+  let cartList = document.getElementById("cartList");
+  cartList.innerHTML="";
+  let subtotal=0;
+  cart.forEach((item,i)=>{
+    const price=parseFloat(item.price.replace(/\D/g,"")) || 0;
+    if(item.qty<1)item.qty=1;
+    subtotal+=price*item.qty;
+    cartList.innerHTML+=`
+    <div class="cart-item">
+      <img src="${item.images[0]}">
+      <div class="item-info">
+        <h4>${item.name}</h4>
+        <div class="price">${item.price} × 
+          <input class="qty" type="number" min="1" value="${item.qty}" onchange="updateQty(${i},this.value)">
+        </div>
+      </div>
+      <button class="remove-btn" onclick="removeItem(${i})">Remove</button>
+    </div>`;
+  });
+
+  let tax=subtotal*0.03;
+  let discount = couponApplied ? subtotal*0.10 : 0;
+  let total = subtotal + tax + 13 - discount;
+
+  document.getElementById("subtotal").innerText="₹"+subtotal.toFixed(2);
+  document.getElementById("tax").innerText="₹"+tax.toFixed(2);
+  document.getElementById("discountVal").innerText="₹"+discount.toFixed(2);
+  document.getElementById("total").innerText=""+total.toFixed(2);
+
+  localStorage.setItem("bill", JSON.stringify({
+    subtotal: subtotal.toFixed(2),
+    tax: tax.toFixed(2),
+    ship: 10,
+    discount: discount.toFixed(2),
+    total: total.toFixed(2)
+  }));
+}
+
+function updateQty(i,v){
+  let qty = parseInt(v)||1;
+  cart[i].qty=qty;
+  localStorage.setItem("cart", JSON.stringify(cart));
+  renderCart();
+}
+
+function removeItem(i){
+  cart.splice(i,1);
+  localStorage.setItem("cart", JSON.stringify(cart));
+  renderCart();
+}
+
+function applyCoupon(){
+  couponApplied=document.getElementById("coupon").value.toUpperCase()=="PROMO10";
+  let msg = document.getElementById("couponMsg");
+  msg.innerHTML = couponApplied?"✅ Coupon applied":"❌ Invalid coupon";
+  msg.className = couponApplied?"success":"error";
+  renderCart();
+}
+
+/* ===== ADDRESS ===== */
+function saveAddress(){
+  if(phone.value.length!==10 || pincode.value.length!==6){
+    alert("Invalid phone or pincode");
+    return;
+  }
+  let addrObj = {
+    name: name.value, phone: phone.value, altPhone: altPhone.value,
+    addr: address.value, city: city.value, state: state.value, pincode: pincode.value
+  };
+  addresses.push(addrObj);
+  localStorage.setItem("addresses", JSON.stringify(addresses));
+  loadAddresses();
+  alert("Address saved!");
+}
+
+function loadAddresses(){
+  let sel = document.getElementById("savedAddress");
+  sel.innerHTML='<option value="">Select Saved Address</option>';
+  addresses.forEach((a,i)=>{
+    sel.innerHTML+=`<option value="${i}">${a.name} - ${a.city} (${a.pincode})</option>`;
+  });
+}
+
+function fillAddress(){
+  let idx = document.getElementById("savedAddress").value;
+  if(idx==="") return;
+  let a = addresses[idx];
+  name.value=a.name; phone.value=a.phone; altPhone.value=a.altPhone;
+  address.value=a.addr; city.value=a.city; state.value=a.state; pincode.value=a.pincode;
+}
+
+/* ===== BUY NOW ===== */
+function buyNow(){
+  if(phone.value.length!==10 || pincode.value.length!==6){
+    alert("Enter valid delivery info!");
+    return;
+  }
+
+  localStorage.setItem("delivery", JSON.stringify({
+    name: name.value, phone: phone.value, altPhone: altPhone.value,
+    addr: address.value, city: city.value, state: state.value, pincode: pincode.value
+  }));
+
+  // Redirect to payment page
+  window.location.href="payment.html";
+}
+
+renderCart();
+loadAddresses();
+</script>
+</body>
+</html>

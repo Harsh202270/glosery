@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Delivery</title>
+<meta name="viewport" content="width=device-width">
+<style>
+body{font-family:Segoe UI;background:#eef7ff}
+.box{max-width:700px;margin:30px auto;background:#fff;padding:25px;border-radius:16px}
+input,textarea{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:1px solid #ccc}
+.btn{padding:12px 20px;border:none;border-radius:30px;background:#0aad0a;color:#fff}
+</style>
+</head>
+
+<body>
+<div class="box">
+<h2>🚚 Delivery Details</h2>
+<input id="name" placeholder="Full Name">
+<input id="phone" placeholder="Phone">
+<input id="alt" placeholder="Alternate Phone">
+<textarea id="addr" placeholder="Full Address"></textarea>
+
+<button class="btn" onclick="save()">Save & Continue</button>
+</div>
+
+<script>
+function save(){
+ let d={name:name.value,phone:phone.value,alt:alt.value,addr:addr.value};
+ localStorage.setItem("delivery",JSON.stringify(d));
+ location.href="confirm.html";
+}
+</script>
+</body>
+</html>

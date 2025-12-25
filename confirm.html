@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Order Confirmed</title>
+<meta name="viewport" content="width=device-width">
+<style>
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: #f2fdf5;
+  text-align: center;
+  margin: 0;
+  padding: 0;
+}
+.box {
+  max-width: 600px;
+  margin: 40px auto;
+  background: #fff;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+}
+h1 {
+  color: #0aad0a;
+  margin-bottom: 20px;
+}
+hr {
+  border: 0;
+  border-top: 1px solid #ccc;
+  margin: 15px 0;
+}
+p {
+  margin: 6px 0;
+  font-size: 16px;
+}
+h2 {
+  margin-top: 15px;
+}
+</style>
+</head>
+<body>
+
+<div class="box">
+  <h1>✅ Order Successful</h1>
+
+  <p><b>Deliver To:</b></p>
+  <p id="addr"></p>
+
+  <hr>
+
+  <p>Subtotal: <span id="s"></span></p>
+  <p>Tax: <span id="t"></span></p>
+  <p>Delivery: <span id="sh"></span></p>
+  <p>Discount: -<span id="d"></span></p>
+
+  <h2>You Pay: <span id="tot"></span></h2>
+  <p style="color:green">🎉 You saved <span id="save"></span></p>
+
+  <div style="margin-top:25px;">
+  <button onclick="goHome()" style="
+    background:#0aad0a;
+    color:white;
+    border:none;
+    padding:12px 28px;
+    font-size:16px;
+    border-radius:30px;
+    cursor:pointer;
+  ">
+    🏠 Continue Shopping
+  </button>
+</div>
+
+
+</div>
+
+<script>
+// ================= GET STORED DATA =================
+let bill = JSON.parse(localStorage.getItem("bill"));
+let delivery = JSON.parse(localStorage.getItem("delivery"));
+let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+
+// ================= SAFETY CHECK =================
+if (!bill || !delivery || cart.length === 0) {
+  alert("Invalid order data!");
+  window.location.href = "index.html";
+}
+
+// ================= DISPLAY ADDRESS =================
+document.getElementById("addr").innerText =
+  `${delivery.name}, ${delivery.phone}\n${delivery.addr}`;
+
+// ================= DISPLAY BILL =================
+document.getElementById("s").innerText = "₹" + Number(bill.s).toFixed(2);
+document.getElementById("t").innerText = "₹" + Number(bill.tax).toFixed(2);
+document.getElementById("sh").innerText = "₹" + Number(bill.ship).toFixed(2);
+document.getElementById("d").innerText = "₹" + Number(bill.discount).toFixed(2);
+document.getElementById("tot").innerText = "₹" + Number(bill.total).toFixed(2);
+document.getElementById("save").innerText = "₹" + Number(bill.discount).toFixed(2);
+
+// ================= HOME BUTTON =================
+function goHome(){
+  window.location.href = "index.html";
+}
+
+// ================= FIREBASE STOCK UPDATE =================
+function updateFirebaseStock(cartItems) {
+  fetch("http://127.0.0.1:5000/update-stock", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      items: cartItems
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    console.log("✅ Firebase stock updated", data);
+  })
+  .catch(err => {
+    console.error("❌ Firebase stock update failed", err);
+  });
+}
+
+// ================= SAVE ORDER LOCALLY =================
+(function saveOrder(){
+  let orders = JSON.parse(localStorage.getItem("orders") || "[]");
+
+  const orderData = {
+    orderId: "ORD" + Date.now(),
+    date: new Date().toLocaleString(),
+    delivery: delivery,
+    bill: bill,
+    items: cart
+  };
+
+  orders.push(orderData);
+  localStorage.setItem("orders", JSON.stringify(orders));
+
+  // 🔥 UPDATE FIREBASE STOCK
+  updateFirebaseStock(cart);
+
+  console.log("✅ Order saved & stock updated");
+
+  // ================= CLEAR TEMP DATA =================
+  localStorage.removeItem("cart");
+  localStorage.removeItem("bill");
+  localStorage.removeItem("delivery");
+})();
+</script>
+
+</body>
+</html>

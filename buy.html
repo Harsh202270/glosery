@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Buy Product</title>
+
+<style>
+body{
+  margin:0;
+  font-family:'Segoe UI',Arial;
+  background:linear-gradient(120deg,#f1fdf3,#e6f5ff);
+}
+.container{
+  max-width:720px;
+  margin:30px auto;
+  background:#fff;
+  padding:25px;
+  border-radius:15px;
+  box-shadow:0 10px 25px rgba(0,0,0,.12);
+}
+h2{text-align:center;margin-bottom:20px;}
+.product img{width:100%;border-radius:12px;margin-bottom:15px;}
+.details span{display:block;margin:6px 0;}
+label{font-weight:bold;}
+input[type=number]{width:70px;padding:6px;border-radius:8px;border:1px solid #ccc;}
+
+.bill{
+  margin-top:15px;
+  border-top:1px dashed #ccc;
+  padding-top:12px;
+}
+.bill div{
+  display:flex;
+  justify-content:space-between;
+  margin:6px 0;
+}
+.bill .grand{
+  font-size:22px;
+  font-weight:bold;
+  color:#0aad0a;
+}
+
+.actions{
+  display:flex;
+  gap:15px;
+  margin-top:20px;
+}
+
+.btn{
+  padding:12px 22px;
+  background:linear-gradient(135deg,#0aad0a,#14c214);
+  color:white;
+  border:none;
+  border-radius:30px;
+  font-weight:bold;
+  cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h2>Buy Product</h2>
+
+  <div class="product">
+    <img id="productImg">
+
+    <div class="details">
+      <h3 id="productName"></h3>
+      <p id="productDesc"></p>
+
+      <span>Unit Price: <strong id="productPrice"></strong></span>
+      <span>Old Price: <del id="productOld"></del></span>
+      <span>Discount: <span id="productDiscount"></span></span>
+
+      <label>Quantity:</label>
+      <input type="number" id="quantity" value="1" min="1">
+
+      <!-- BILL -->
+      <div class="bill">
+  <div><span>Sub Total</span><span id="subTotal">₹0</span></div>
+  <div><span>GST (3%)</span><span id="tax">₹0</span></div>
+  <div><span>Handling Charge</span><span id="handling">₹10</span></div>
+  <div><span>Place Charge</span><span id="place">₹3</span></div>
+  <div class="grand">
+    <span>Grand Total</span>
+    <span id="grandTotal">₹0</span>
+  </div>
+</div>
+
+
+    <div class="actions">
+      <button class="btn" id="addToCart">🛒 Add to Cart</button>
+      <button class="btn" id="buyNow">⚡ Place Order</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= CONFIG ================= */
+const GST_RATE = 0.03;
+const HANDLING_CHARGE = 10;
+const PLACE_CHARGE = 3;
+const MAX_LIMIT = 6;
+
+/* ================= UTILS ================= */
+function getDiscount(oldP,newP){
+  const o = parseFloat(oldP.replace(/\D/g,""));
+  const n = parseFloat(newP.replace(/\D/g,""));
+  return Math.round(((o-n)/o)*100) + "% OFF";
+}
+
+/* ================= LOAD PRODUCT ================= */
+const items = JSON.parse(localStorage.getItem("buyItems") || "[]");
+
+if(items.length === 0){
+  alert("No product selected");
+  location.href="index.html";
+}
+
+const product = items[0];
+const unitPrice = parseFloat(product.price.replace(/\D/g,""));
+
+let availableStock = 0;
+
+/* ================= FETCH LATEST STOCK ================= */
+fetch("http://127.0.0.1:5000/products")
+.then(res => res.json())
+.then(data => {
+  const products = data.filter(p => p);
+  const liveProduct = products.find(p => p.id === product.id);
+
+  if(!liveProduct){
+    alert("Product not found");
+    location.href="index.html";
+    return;
+  }
+
+  availableStock = parseInt(liveProduct.stock || 0);
+
+  if(availableStock <= 0){
+    alert("❌ Product is out of stock");
+    location.href="index.html";
+    return;
+  }
+
+  // SET INPUT LIMIT
+  const maxAllowed = Math.min(MAX_LIMIT, availableStock);
+  const qtyInput = document.getElementById("quantity");
+  qtyInput.max = maxAllowed;
+
+  if(qtyInput.value > maxAllowed){
+    qtyInput.value = maxAllowed;
+  }
+
+  updateBill();
+});
+
+/* ================= UI DATA ================= */
+document.getElementById("productImg").src = product.images[0];
+document.getElementById("productName").innerText = product.name;
+document.getElementById("productDesc").innerText = product.desc;
+document.getElementById("productPrice").innerText = product.price;
+document.getElementById("productOld").innerText = product.old;
+document.getElementById("productDiscount").innerText =
+  getDiscount(product.old, product.price);
+
+/* ================= BILL ================= */
+function updateBill(){
+  const qtyInput = document.getElementById("quantity");
+  let qty = parseInt(qtyInput.value) || 1;
+
+  const maxAllowed = Math.min(MAX_LIMIT, availableStock);
+
+  if(qty > maxAllowed){
+    qty = maxAllowed;
+    qtyInput.value = maxAllowed;
+    alert(`⚠️ Maximum allowed quantity is ${maxAllowed}`);
+  }
+
+  if(qty < 1){
+    qty = 1;
+    qtyInput.value = 1;
+  }
+
+  const subTotal = unitPrice * qty;
+  const tax = Math.round(subTotal * GST_RATE);
+  const grandTotal = subTotal + tax + HANDLING_CHARGE + PLACE_CHARGE;
+
+  document.getElementById("subTotal").innerText = "₹" + subTotal;
+  document.getElementById("tax").innerText = "₹" + tax;
+  document.getElementById("handling").innerText = "₹" + HANDLING_CHARGE;
+  document.getElementById("place").innerText = "₹" + PLACE_CHARGE;
+  document.getElementById("grandTotal").innerText = "₹" + grandTotal;
+}
+
+/* ================= EVENTS ================= */
+document.getElementById("quantity").addEventListener("input", updateBill);
+
+/* ================= ADD TO CART ================= */
+document.getElementById("addToCart").addEventListener("click",()=>{
+  const qty = parseInt(document.getElementById("quantity").value);
+
+  if(qty > availableStock){
+    alert("❌ Not enough stock available");
+    return;
+  }
+
+  let cart = JSON.parse(localStorage.getItem("cart")||"[]");
+
+  const idx = cart.findIndex(p=>p.id===product.id);
+  if(idx>=0) cart[idx].qty += qty;
+  else cart.push({...product, qty});
+
+  localStorage.setItem("cart", JSON.stringify(cart));
+  alert("✅ Added to cart");
+});
+
+/* ================= PLACE ORDER ================= */
+document.getElementById("buyNow").addEventListener("click",()=>{
+  const qty = parseInt(document.getElementById("quantity").value);
+
+  if(qty > availableStock){
+    alert("❌ Not enough stock available");
+    return;
+  }
+
+  const subTotal = unitPrice * qty;
+  const tax = Math.round(subTotal * GST_RATE);
+  const total = subTotal + tax + HANDLING_CHARGE + PLACE_CHARGE;
+
+  localStorage.setItem("cart", JSON.stringify([{
+    ...product,
+    qty,
+    subTotal,
+    tax,
+    handling: HANDLING_CHARGE,
+    place: PLACE_CHARGE,
+    total
+  }]));
+
+  window.location.href = "cart.html";
+});
+</script>
+
+</body>
+</html>
